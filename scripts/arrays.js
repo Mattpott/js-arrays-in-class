@@ -44,6 +44,8 @@ const filterCourseCard = (markup, query) => {
   return markup.toLowerCase().includes(query.toLowerCase());
 };
 
+let filteredCourseCards = courseCards;
+
 const searchButton = document.getElementById("search-btn");
 searchButton.addEventListener("click", (ev) => {
   console.log(ev);
@@ -53,11 +55,28 @@ searchButton.addEventListener("click", (ev) => {
   const searchField = document.querySelector('input[name="query-text"]');
   const queryText = searchField.value;
   console.log(queryText);
-  const filteredCourseCards = courseCards.filter((card) =>
+  filteredCourseCards = courseCards.filter((card) =>
     filterCourseCard(card, queryText)
   );
   console.log('filteredCourseCards', filteredCourseCards);
   resultsContainer.innerHTML = filteredCourseCards.join("");
+  updateResults();
 });
 
 // 3. we update the result count and related summary info as we filter
+function updateResults() {
+  const creditHours = filteredCourseCards.reduce((p, n) => 
+  {p.credits + n.credits;}, filteredCourseCards[0]);
+  const prereqCreditHours = filteredCourseCards.map((p) => { p.prereqs; }).reduce((p, n) => 
+  {p.credits + n.credits;}, filteredCourseCards[0]);
+  const summaryInfo = `<h2>Summary</h2>
+  <dl>
+    <dt>Count</dt>
+    <dd><span>${filteredCourseCards.length}</span> items</dd>
+    <dt>Cost</dt>
+    <dd><span>${creditHours}</span> credit-hours + <span>${prereqCreditHours}</span> credit-hours of prereqs</dd>
+  </dl>`;
+  console.log(summaryInfo);
+  const summaryContainer = document.querySelector('div#summary');
+  summaryContainer.innerHTML = summaryInfo;
+}
