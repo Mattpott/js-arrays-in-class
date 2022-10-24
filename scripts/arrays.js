@@ -1,6 +1,6 @@
 console.log(data);
-// 1. instead of creating the cards manually, we should use array functions to convert the data into cards
 
+// 1. instead of creating the cards manually, we should use array functions to convert the data into cards
 const courseToCard = ({
   prefix,
   number,
@@ -31,37 +31,20 @@ const courseToCard = ({
 const resultsContainer = document.querySelector("#filtered-results");
 const courseCards = data.items.map(courseToCard);
 resultsContainer.innerHTML = courseCards.join("");
-// courseCards.forEach((c) => document.write(c));
-
-// console.log(courseCards);
-// document.write(courseCards.join(''))
 
 // 2. maybe we only show those that match the search query?
-//
-
 const filterCourseCard = (course, query) => {
   console.log(course, query);
-  let include = course.prefix.toLowerCase().includes(query.toLowerCase());
-  if (!include) {
-    include = course.number == query;
-  }
-  if (!include) {
-    include = course.title.toLowerCase().includes(query.toLowerCase());
-  }
-  if (!include) {
-    include = course.url.toLowerCase().includes(query.toLowerCase());
-  }
-  if (!include) {
-    include = course.desc.toLowerCase().includes(query.toLowerCase());
-  }
+  let include = course.prefix.toLowerCase().includes(query.toLowerCase())
+    || course.title.toLowerCase().includes(query.toLowerCase())
+    || course.url.toLowerCase().includes(query.toLowerCase())
+    || course.desc.toLowerCase().includes(query.toLowerCase())
+    || course.number == query || course.credits == query;
   if (!include) {
     let queriedPrereq = course.prereqs.find((prereq) => {
       return prereq == query;
     });
     include = queriedPrereq != undefined;
-  }
-  if (!include) {
-    include = course.credits == query;
   }
   return include;
 };
@@ -74,14 +57,12 @@ searchButton.addEventListener("click", (ev) => {
   console.log(ev);
   ev.preventDefault();
   // ev.stopPropagation();
-  console.log("query text");
   const searchField = document.querySelector('input[name="query-text"]');
   const queryText = searchField.value;
   console.log(queryText);
   filteredCourseCards = data.items.filter((course) =>
     filterCourseCard(course, queryText)
   );
-  console.log('filteredCourseCards', filteredCourseCards);
   let filteredMarkup = filteredCourseCards.map(courseToCard);
   resultsContainer.innerHTML = filteredMarkup.join("");
   updateResults();
@@ -89,14 +70,13 @@ searchButton.addEventListener("click", (ev) => {
 
 // 3. we update the result count and related summary info as we filter
 function updateResults() {
-  const creditHours = filteredCourseCards.reduce((p, n) => p.concat(n.credits), [])
+  const creditHours = filteredCourseCards.reduce((p, n) => p.concat(n.credits), [0])
     .reduce((p, n) => p + n);
   const filteredPrereqsList = filteredCourseCards.map((c) => c.prereqs)
-    .reduce((p, n) => p.concat(n));
-  const prereqCreditHours = data.items.filter((c) => {
-    return filteredPrereqsList.includes(c.number);
-  }).reduce((p, n) => p.credits + n.credits);
-  console.log("Prereqs: " + prereqCreditHours);
+    .reduce((p, n) => p.concat(n), [0]);
+  let prereqCreditHours = 0;
+  data.items.filter((c) => filteredPrereqsList.includes(c.number))
+    .forEach((c) => prereqCreditHours += c.credits);
   const summaryInfo = `<h2>Summary</h2>
   <dl>
     <dt>Count</dt>
