@@ -89,10 +89,14 @@ searchButton.addEventListener("click", (ev) => {
 
 // 3. we update the result count and related summary info as we filter
 function updateResults() {
-  const creditHours = filteredCourseCards.map((c) => { c.credits })
-    .reduce((p, n) => { return p + n; });
-    // make filter based on course number
-  const prereqCreditHours = filteredCourseCards.map((p) => p.prereqs).reduce((p, n) => { return p.credits + n.credits; });
+  const creditHours = filteredCourseCards.reduce((p, n) => p.concat(n.credits), [])
+    .reduce((p, n) => p + n);
+  const filteredPrereqsList = filteredCourseCards.map((c) => c.prereqs)
+    .reduce((p, n) => p.concat(n));
+  const prereqCreditHours = data.items.filter((c) => {
+    return filteredPrereqsList.includes(c.number);
+  }).reduce((p, n) => p.credits + n.credits);
+  console.log("Prereqs: " + prereqCreditHours);
   const summaryInfo = `<h2>Summary</h2>
   <dl>
     <dt>Count</dt>
