@@ -20,7 +20,7 @@ const courseToCard = ({
                 <h5 class="card-title">${prefix} ${number}</h5>
                 <p class="card-text">${desc}</p>
                 ${prereqLinks}
-                <div class="card-footer text-muted">
+                <div id="credits" class="card-footer text-muted">
                   ${credits}
                 </div>
               </div>
@@ -39,12 +39,35 @@ resultsContainer.innerHTML = courseCards.join("");
 // 2. maybe we only show those that match the search query?
 //
 
-const filterCourseCard = (markup, query) => {
-  console.log(markup, query);
-  return markup.toLowerCase().includes(query.toLowerCase());
+const filterCourseCard = (course, query) => {
+  console.log(course, query);
+  let include = course.prefix.toLowerCase().includes(query.toLowerCase());
+  if (!include) {
+    include = course.number == query;
+  }
+  if (!include) {
+    include = course.title.toLowerCase().includes(query.toLowerCase());
+  }
+  if (!include) {
+    include = course.url.toLowerCase().includes(query.toLowerCase());
+  }
+  if (!include) {
+    include = course.desc.toLowerCase().includes(query.toLowerCase());
+  }
+  if (!include) {
+    let queriedPrereq = course.prereqs.find((prereq) => {
+      return prereq == query;
+    });
+    include = queriedPrereq != undefined;
+  }
+  if (!include) {
+    include = course.credits == query;
+  }
+  return include;
 };
 
-let filteredCourseCards = courseCards;
+let filteredCourseCards = data.items;
+updateResults();
 
 const searchButton = document.getElementById("search-btn");
 searchButton.addEventListener("click", (ev) => {
@@ -55,28 +78,28 @@ searchButton.addEventListener("click", (ev) => {
   const searchField = document.querySelector('input[name="query-text"]');
   const queryText = searchField.value;
   console.log(queryText);
-  filteredCourseCards = courseCards.filter((card) =>
-    filterCourseCard(card, queryText)
+  filteredCourseCards = data.items.filter((course) =>
+    filterCourseCard(course, queryText)
   );
   console.log('filteredCourseCards', filteredCourseCards);
-  resultsContainer.innerHTML = filteredCourseCards.join("");
+  let filteredMarkup = filteredCourseCards.map(courseToCard);
+  resultsContainer.innerHTML = filteredMarkup.join("");
   updateResults();
 });
 
 // 3. we update the result count and related summary info as we filter
 function updateResults() {
-  const creditHours = filteredCourseCards.reduce((p, n) => 
-  {p.credits + n.credits;}, filteredCourseCards[0]);
-  const prereqCreditHours = filteredCourseCards.map((p) => { p.prereqs; }).reduce((p, n) => 
-  {p.credits + n.credits;}, filteredCourseCards[0]);
+  const creditHours = filteredCourseCards.map((c) => { c.credits })
+    .reduce((p, n) => { return p + n; });
+    // make filter based on course number
+  const prereqCreditHours = filteredCourseCards.map((p) => p.prereqs).reduce((p, n) => { return p.credits + n.credits; });
   const summaryInfo = `<h2>Summary</h2>
   <dl>
     <dt>Count</dt>
-    <dd><span>${filteredCourseCards.length}</span> items</dd>
+    <dd><span>${filteredCourseCards.length}</span> item(s)</dd>
     <dt>Cost</dt>
     <dd><span>${creditHours}</span> credit-hours + <span>${prereqCreditHours}</span> credit-hours of prereqs</dd>
   </dl>`;
-  console.log(summaryInfo);
   const summaryContainer = document.querySelector('div#summary');
   summaryContainer.innerHTML = summaryInfo;
 }
